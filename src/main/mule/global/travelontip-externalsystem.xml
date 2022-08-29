@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+	<flow name="travelontip-externalsystemFlow" doc:id="dc45d05b-1d78-4c88-9708-014a075cfda6" >
+		<http:listener doc:name="Listener" doc:id="08b3a4d4-1a7a-40aa-963e-31abb81a31f0" config-ref="HTTP_Listener_config" path="${http.listner.path}">
+			<http:error-response >
+				<http:body ><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<logger level="INFO" doc:name="IN LOG" doc:id="3923c62c-9928-4c5d-9514-4801b540a57d" message='#["Request received"]'/>
+		<ee:transform doc:name="Transform Message" doc:id="c034ec5d-23a9-4e2b-8522-bbdb6514c696" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="servicetype" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.uriParams.servicetype]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="0f224bed-3378-4934-b930-a59f99fe42f7" >
+			<when expression='#[vars.servicetype=="routes"]'>
+				<logger level="INFO" doc:name="Logger" doc:id="bab7199a-ca33-4354-a13b-2bbee65c05f7" message="routes flow called"/>
+				<flow-ref doc:name="Flow Reference" doc:id="c9fdde99-2a00-478d-811f-62a800389719" name="travelontip-getroutes-implementationFlow"/>
+			</when>
+			<when expression='#[vars.servicetype=="schedules"]'>
+				<logger level="INFO" doc:name="Logger" doc:id="2c2cc33a-d9ce-4705-b6b5-515fc9b7c2d5" message="schedule flow called"/>
+				<flow-ref doc:name="Flow Reference" doc:id="efdac878-b3ca-4db9-a182-376bea033243" name="travelontip-getschedules-implementationSub_Flow"/>
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger" doc:id="80746eee-0c2d-450b-a703-c277e5563759" message="no servicetype provided"/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="OUT LOG" doc:id="95a2753f-eae3-4a7b-afca-61cbbca8c44f" message='#["Request sent"]'/>
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d73b71ff-f49f-4ac4-a5bc-55a48d5d2bc1" >
+				<set-payload value="error" doc:name="Set Payload" doc:id="eacf7a4f-020b-425d-af55-fa89b5f18441" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>
